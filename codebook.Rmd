@@ -1,0 +1,60 @@
+---
+title: "README"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# reading all files into R for this complete project
+dataActivityTest  <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/test/Y_test.txt" )
+dataActivityTrain <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/train/Y_train.txt")
+dataSubjectTrain <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/train/subject_train.txt")
+dataSubjectTest  <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/test/subject_test.txt")
+dataFeaturesTest  <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/test/X_test.txt" )
+dataFeaturesTrain <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/train/X_train.txt")
+activityLabels <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/activity_labels.txt")
+dataFeaturesNames <- read.table("C:/Users/sheeba/Documents/UCI HAR Dataset/features.txt")
+
+# combining the test and train dataset
+dataSubject <- rbind(dataSubjectTrain, dataSubjectTest)
+dataActivity <- rbind(dataActivityTrain, dataActivityTest)
+dataFeatures <- rbind(dataFeaturesTrain, dataFeaturesTest)
+# giving appropriate names for each column
+names(dataSubject)<-c("subject")
+names(dataActivity)<- c("activity")
+# naming the columns of all dat features using the name provided in file features.txt
+names(dataFeatures)<- dataFeaturesNames$V2
+#combining all the data columns here
+dataCombine <- cbind(dataSubject, dataActivity)
+rawData <- cbind(dataFeatures, dataCombine)
+#Extracting out only the data columns that has mean and std in thier names
+subdataFeaturesNames<-dataFeaturesNames$V2[grep("mean\\(\\)|std\\(\\)", dataFeaturesNames$V2)]
+#adding the subject and activity names back as we subset the data in the previous state
+selectedNames<-c(as.character(subdataFeaturesNames), "subject", "activity" )
+#here we are going to subset the data by subject and activity
+rawData<-subset(rawData,select=selectedNames)
+# giving meaning nams here for each activity
+names(rawData)<-gsub("^t", "time", names(rawData))
+names(rawData)<-gsub("^f", "frequency", names(rawData))
+names(rawData)<-gsub("Acc", "Accelerometer", names(rawData))
+names(rawData)<-gsub("Gyro", "Gyroscope", names(rawData))
+names(rawData)<-gsub("Mag", "Magnitude", names(rawData))
+names(rawData)<-gsub("BodyBody", "Body", names(rawData))
+# going to create tidy dataset as explained in the assignment
+library(plyr);
+tidyData<-aggregate(. ~subject + activity, rawData, mean)
+tidyData<-tidyData[order(tidyData$subject,tidyData$activity),]
+#writing the file to the current workign directory
+write.table(tidyData, file = "tidydata.txt",row.name=FALSE)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
